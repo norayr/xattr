@@ -39,7 +39,6 @@ PROCEDURE GetAttr*(path: ARRAY OF CHAR; name: ARRAY OF CHAR; VAR value: ARRAY OF
 VAR res: LONGINT;
 BEGIN
   res := getxattr(path, name, value, size);
-  value[res] := 0X;
   RETURN res;
 END GetAttr;
 
