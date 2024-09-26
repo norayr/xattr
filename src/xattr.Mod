@@ -1,5 +1,5 @@
 MODULE xattr;
-IMPORT SYSTEM;
+IMPORT SYSTEM, Out;
 
 TYPE
   TTag* = ARRAY 256 OF CHAR;
@@ -71,6 +71,7 @@ BEGIN
   UNTIL ~isEmpty OR (i = (size-1));
 
   IF isEmpty THEN
+    Out.String("got empty list"); Out.Ln;
     RETURN NIL;  (* If the list is completely zeroed out, return NIL *)
   END;
 
@@ -81,7 +82,7 @@ BEGIN
     IF list[i] = 0X THEN INC(numTags) END;
     INC(i);
   END;
-
+  Out.String("found "); Out.Int(numTags, 0); Out.String(" tags"); Out.Ln;
   (* Step 2: Allocate memory for the tags *)
   NEW(ttags, numTags);
 
@@ -97,6 +98,7 @@ BEGIN
     ELSE
       (* Null terminator reached; finalize current tag *)
       ttags[tagIndex][j] := 0X;
+      Out.String("got tag: "); Out.String(ttags[tagIndex]); Out.Ln;
       INC(tagIndex);
       j := 0;  (* Reset index for the next tag *)
     END;
@@ -112,6 +114,8 @@ VAR
 BEGIN
   zeroStr(list);
   res := listxattr(path, list, size);  (* Calls C function to populate list *)
+  Out.String("list="); Out.String(list); Out.Ln;
+  Out.String("res="); Out.Int(res, 0); Out.Ln;
   IF res > 0 THEN
     RETURN listToTTags(list, res);  (* Convert the list to TTags *)
   ELSE
