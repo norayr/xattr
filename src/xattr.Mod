@@ -1,5 +1,5 @@
 MODULE xattr;
-IMPORT SYSTEM, Out, StringList;
+IMPORT SYSTEM, Out, StringList, Strings:= ooc2Strings;
 
 TYPE
   TStringList* = StringList.TStringList;
@@ -33,7 +33,7 @@ VAR
   tag: StringList.TString;
   tlist: TStringList;
   tempStr: ARRAY 256 OF CHAR;
-  r: LONGINT;
+  r: LONGINT;  (* Add the result variable for AddString *)
 BEGIN
   Out.String("entered listToTStringList"); Out.Ln;
   Out.String("list='"); Out.String(list); Out.Char("'"); Out.Ln;
@@ -54,12 +54,18 @@ BEGIN
       END;
       tempStr[j] := 0X;  (* Null-terminate the string *)
 
-      (* Add the string to the TStringList *)
-      StringList.TStringFromString(tempStr, tag);
-      r := StringList.AddString(tlist, tempStr);
+      (* Skip 'user.tags' *)
+      IF ~Strings.Equal(tempStr, "user.tags") THEN
+        Out.String("Adding tag: '"); Out.String(tempStr); Out.String("'"); Out.Ln;
+        StringList.TStringFromString(tempStr, tag);
+        r := StringList.AddString(tlist, tempStr);  (* Assign the result to avoid procedure call error *)
+      ELSE
+        Out.String("Skipping 'user.tags' as it is the attribute key"); Out.Ln;
+      END;
     END;
     INC(i);  (* Move to the next string (past the null terminator) *)
   END;
+
   RETURN tlist;
 END listToTStringList;
 
