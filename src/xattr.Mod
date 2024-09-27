@@ -26,14 +26,13 @@ BEGIN
   END;
 END zeroStr;
 
-(* Convert the list of null-terminated strings from xattr to a TStringList *)
 PROCEDURE listToTStringList(VAR list: ARRAY OF CHAR; size: LONGINT): TStringList;
 VAR
   i, j: LONGINT;
   tag: StringList.TString;
   tlist: TStringList;
   tempStr: ARRAY 256 OF CHAR;
-  r: LONGINT;  (* Add the result variable for AddString *)
+  r: LONGINT;
 BEGIN
   Out.String("entered listToTStringList"); Out.Ln;
   Out.String("list='"); Out.String(list); Out.Char("'"); Out.Ln;
@@ -54,22 +53,23 @@ BEGIN
       END;
       tempStr[j] := 0X;  (* Null-terminate the string *)
 
-      (* Skip 'user.tags' *)
+      (* Skip 'user.tags' immediately to prevent it from being added as a tag *)
       IF ~Strings.Equal(tempStr, "user.tags") THEN
-        Out.String("Adding tag: '"); Out.String(tempStr); Out.String("'"); Out.Ln;
+        Out.String("Extracted tag for TStringList: '"); Out.String(tempStr); Out.String("'"); Out.Ln;
+
+        (* Add the string to the TStringList *)
         StringList.TStringFromString(tempStr, tag);
-        r := StringList.AddString(tlist, tempStr);  (* Assign the result to avoid procedure call error *)
+        r := StringList.AddString(tlist, tempStr);
       ELSE
-        Out.String("Skipping 'user.tags' as it is the attribute key"); Out.Ln;
+        Out.String("Skipping 'user.tags' as it is the attribute key."); Out.Ln;
       END;
     END;
     INC(i);  (* Move to the next string (past the null terminator) *)
   END;
-
   RETURN tlist;
 END listToTStringList;
-
 (* List the attributes of a file and convert to a TStringList *)
+
 PROCEDURE ListAttr*(path: ARRAY OF CHAR; VAR list: ARRAY OF CHAR; size: LONGINT): TStringList;
 VAR
   res: LONGINT;
@@ -85,24 +85,33 @@ BEGIN
   END;
 END ListAttr;
 
-(* Get the value of an extended attribute *)
 PROCEDURE GetAttr*(path: ARRAY OF CHAR; name: ARRAY OF CHAR; VAR value: ARRAY OF CHAR; size: LONGINT): LONGINT;
 VAR
   res: LONGINT;
 BEGIN
-  zeroStr(value);  (* Clear the buffer *)
+  zeroStr(value);  (* Clear the buffer to avoid leftover characters *)
   res := getxattr(path, name, value, size);
 
   IF res >= 0 THEN
-    value[res] := 0X;  (* Ensure null termination of the value *)
+    (* Ensure the string is null-terminated correctly *)
+    IF res < LEN(value) THEN
+      value[res] := 0X;
+    ELSE
+      value[LEN(value)-1] := 0X;  (* Protect against buffer overflow *)
+    END;
+
+    (* Debugging output to see the retrieved value *)
+    Out.String("Retrieved value from getxattr: '"); Out.String(value); Out.String("' with length "); Out.Int(res, 0); Out.Ln;
+  ELSE
+    Out.String("Failed to retrieve value for '"); Out.String(name); Out.String("' from getxattr. Result: "); Out.Int(res, 0); Out.Ln;
   END;
 
   RETURN res;
 END GetAttr;
 
-(* Set the value of an extended attribute *)
 PROCEDURE SetAttr*(path: ARRAY OF CHAR; name: ARRAY OF CHAR; value: ARRAY OF CHAR; size: LONGINT; flags: LONGINT): LONGINT;
 BEGIN
+  (* Call the underlying C function to set the attribute *)
   RETURN setxattr(path, name, value, size, flags);
 END SetAttr;
 
