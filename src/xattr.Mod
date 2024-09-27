@@ -15,28 +15,33 @@ PROCEDURE -setxattr(path: ARRAY OF CHAR; name: ARRAY OF CHAR; value: ARRAY OF CH
 PROCEDURE -removexattr(path: ARRAY OF CHAR; name: ARRAY OF CHAR): LONGINT
   "removexattr(path, name)";
 
-PROCEDURE zeroStr(VAR s: ARRAY OF CHAR);
+(* Helper procedure to zero out the array for safety *)
+PROCEDURE zeroStr*(VAR s: ARRAY OF CHAR);
 VAR i: LONGINT;
 BEGIN
   i := 0;
-  REPEAT
+  WHILE i < LEN(s) DO
     s[i] := 0X;
-    INC(i)
-  UNTIL i = LEN(s);
+    INC(i);
+  END;
 END zeroStr;
 
+(* Convert the list of null-terminated strings from xattr to a TStringList *)
 PROCEDURE listToTStringList(VAR list: ARRAY OF CHAR; size: LONGINT): TStringList;
 VAR
   i, j: LONGINT;
   tag: StringList.TString;
   tlist: TStringList;
-  tempStr: ARRAY 256 OF CHAR;  (* Temporary array to store extracted string *)
-  tmpres: LONGINT;
+  tempStr: ARRAY 256 OF CHAR;
+  r: LONGINT;
 BEGIN
+  Out.String("entered listToTStringList"); Out.Ln;
+  Out.String("list='"); Out.String(list); Out.Char("'"); Out.Ln;
+
   (* Create a new TStringList *)
   tlist := StringList.Create();
 
-  (* Initialize pointers and traverse the list of null-terminated strings *)
+  (* Traverse the list of null-terminated strings *)
   i := 0;
   WHILE i < size DO
     IF list[i] # 0X THEN
@@ -49,43 +54,56 @@ BEGIN
       END;
       tempStr[j] := 0X;  (* Null-terminate the string *)
 
-      (* Convert tempStr to TString and add to the list *)
+      (* Add the string to the TStringList *)
       StringList.TStringFromString(tempStr, tag);
-      tmpres := StringList.AddString(tlist, tempStr);
+      r := StringList.AddString(tlist, tempStr);
     END;
     INC(i);  (* Move to the next string (past the null terminator) *)
   END;
   RETURN tlist;
 END listToTStringList;
 
+(* List the attributes of a file and convert to a TStringList *)
 PROCEDURE ListAttr*(path: ARRAY OF CHAR; VAR list: ARRAY OF CHAR; size: LONGINT): TStringList;
 VAR
   res: LONGINT;
 BEGIN
-  zeroStr(list);
-  res := listxattr(path, list, size);  (* Calls C function to populate list *)
+  zeroStr(list);  (* Clear the list *)
+  res := listxattr(path, list, size);  (* Call the C function to list attributes *)
+
+  (* Check if listxattr succeeded *)
   IF res > 0 THEN
     RETURN listToTStringList(list, res);  (* Convert the list to TStringList *)
   ELSE
-    RETURN NIL;  (* If no attributes found, return NIL *)
+    RETURN NIL;  (* Return NIL if no attributes are found *)
   END;
 END ListAttr;
 
+(* Get the value of an extended attribute *)
 PROCEDURE GetAttr*(path: ARRAY OF CHAR; name: ARRAY OF CHAR; VAR value: ARRAY OF CHAR; size: LONGINT): LONGINT;
-VAR res: LONGINT;
+VAR
+  res: LONGINT;
 BEGIN
+  zeroStr(value);  (* Clear the buffer *)
   res := getxattr(path, name, value, size);
+
+  IF res >= 0 THEN
+    value[res] := 0X;  (* Ensure null termination of the value *)
+  END;
+
   RETURN res;
 END GetAttr;
 
+(* Set the value of an extended attribute *)
 PROCEDURE SetAttr*(path: ARRAY OF CHAR; name: ARRAY OF CHAR; value: ARRAY OF CHAR; size: LONGINT; flags: LONGINT): LONGINT;
 BEGIN
-  RETURN setxattr(path, name, value, size, flags)
+  RETURN setxattr(path, name, value, size, flags);
 END SetAttr;
 
+(* Remove an extended attribute *)
 PROCEDURE RemoveAttr*(path: ARRAY OF CHAR; name: ARRAY OF CHAR): LONGINT;
 BEGIN
-  RETURN removexattr(path, name)
+  RETURN removexattr(path, name);
 END RemoveAttr;
 
 END xattr.
