@@ -68,8 +68,8 @@ BEGIN
   END;
   RETURN tlist;
 END listToTStringList;
-(* List the attributes of a file and convert to a TStringList *)
 
+(* List the attributes of a file and convert to a TStringList *)
 PROCEDURE ListAttr*(path: ARRAY OF CHAR; VAR list: ARRAY OF CHAR; size: LONGINT): TStringList;
 VAR
   res: LONGINT;
@@ -79,8 +79,10 @@ BEGIN
 
   (* Check if listxattr succeeded *)
   IF res > 0 THEN
+    Out.String("Attributes found for '"); Out.String(path); Out.String("': '"); Out.String(list); Out.String("' with length "); Out.Int(res, 0); Out.Ln;
     RETURN listToTStringList(list, res);  (* Convert the list to TStringList *)
   ELSE
+    Out.String("No attributes found for '"); Out.String(path); Out.String("'"); Out.Ln;
     RETURN NIL;  (* Return NIL if no attributes are found *)
   END;
 END ListAttr;
