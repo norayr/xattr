@@ -105,6 +105,7 @@ BEGIN
     (* Debugging output to see the retrieved value *)
     Out.String("Retrieved value from getxattr: '"); Out.String(value); Out.String("' with length "); Out.Int(res, 0); Out.Ln;
   ELSE
+    Out.String("File: "); Out.String(path); Out.Ln;
     Out.String("Failed to retrieve value for '"); Out.String(name); Out.String("' from getxattr. Result: "); Out.Int(res, 0); Out.Ln;
   END;
 
