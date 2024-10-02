@@ -79,10 +79,10 @@ BEGIN
 
   (* Check if listxattr succeeded *)
   IF res > 0 THEN
-    Out.String("Attributes found for '"); Out.String(path); Out.String("': '"); Out.String(list); Out.String("' with length "); Out.Int(res, 0); Out.Ln;
+    (*Out.String("Attributes found for '"); Out.String(path); Out.String("': '"); Out.String(list); Out.String("' with length "); Out.Int(res, 0); Out.Ln;*)
     RETURN listToTStringList(list, res);  (* Convert the list to TStringList *)
   ELSE
-    Out.String("No attributes found for '"); Out.String(path); Out.String("'"); Out.Ln;
+    (*Out.String("No attributes found for '"); Out.String(path); Out.String("'"); Out.Ln;*)
     RETURN NIL;  (* Return NIL if no attributes are found *)
   END;
 END ListAttr;
@@ -103,10 +103,14 @@ BEGIN
     END;
 
     (* Debugging output to see the retrieved value *)
+    (*
     Out.String("Retrieved value from getxattr: '"); Out.String(value); Out.String("' with length "); Out.Int(res, 0); Out.Ln;
+    *)
+  (*
   ELSE
     Out.String("File: "); Out.String(path); Out.Ln;
     Out.String("Failed to retrieve value for '"); Out.String(name); Out.String("' from getxattr. Result: "); Out.Int(res, 0); Out.Ln;
+  *)
   END;
 
   RETURN res;
