@@ -34,9 +34,10 @@ VAR
   tempStr: ARRAY 256 OF CHAR;
   r: LONGINT;
 BEGIN
+  (*
   Out.String("entered listToTStringList"); Out.Ln;
   Out.String("list='"); Out.String(list); Out.Char("'"); Out.Ln;
-
+  *)
   (* Create a new TStringList *)
   tlist := StringList.Create();
 
@@ -60,8 +61,10 @@ BEGIN
         (* Add the string to the TStringList *)
         StringList.TStringFromString(tempStr, tag);
         r := StringList.AddString(tlist, tempStr);
+      (*
       ELSE
         Out.String("Skipping 'user.tags' as it is the attribute key."); Out.Ln;
+      *)
       END;
     END;
     INC(i);  (* Move to the next string (past the null terminator) *)
